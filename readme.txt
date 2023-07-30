@@ -1,0 +1,3 @@
+- Initialize local directory as git repo
+- create github repo like - ms
+- Add remote in - manage remote options in intellij
