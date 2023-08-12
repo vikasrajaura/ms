@@ -7,10 +7,29 @@ spring:
   cloud:
     gateway:
       routes:
-        - id: PRODUCT-SERVICE
+        - id: product-service
           uri: lb://PRODUCT-SERVICE
           predicates:
             - Path=/products/**
+        - id: order-service
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/order/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: order-service
+                fallbackuri: forward:/orderServiceFallBack
+        - id: payment-service
+          uri: lb://PAYMENT-SERVICE
+          predicates:
+            - Path=/payment/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: payment-service
+                fallbackuri: forward:/paymentServiceFallback
+
 eureka:
   instance:
     hostname: localhost

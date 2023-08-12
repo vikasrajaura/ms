@@ -49,3 +49,12 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka
+
+3. Hystrix - to make resilence app and to add fallback controller, add this in cloud-gateway.
+	a. Add hystrix dependency in pom
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+		</dependency>
+	b. @EnableHystrix on cloud-gateway main application class
+	c. Add FallbackController in cloudgateway
