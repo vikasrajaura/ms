@@ -50,7 +50,46 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka
 
-3. Hystrix - to make resilence app and to add fallback controller, add this in cloud-gateway.
+3. Create config-Server
+   	a. Add - spring-cloud-config-server, eureka discovery client in pom dependencies, download and import in intellij
+   	b. @EnableConfigServer, @EnableDiscoveryClient on main application class
+   	c. application.yml changes -
+   	d. create local or remote git repo, and add application.yml file there, add below config in that yml file
+   	    eureka:
+          client:
+            register-with-eureka: true
+            fetch-registry: true
+            service-url:
+              defaultZone: http://localhost:8761/eureka;
+          instance:
+            hostname: localhost
+    e. add below config in config server yml file, here we have created local git repo
+   	    server:
+          port: 8088
+
+        spring:
+          application:
+            name: CONFIG-SERVER
+          profiles:
+            active: native
+          cloud:
+            config:
+              server:
+                git:
+                  uri: file:\\D:/dev/proj/java/config-server-repo
+                  clone-on-start: true
+
+    f. Now other services need to talk to this config-server, so that configurations can be read, for that
+        we need to include starter-config dependency in pom.xml
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-config</artifactId>
+		</dependency>
+	g. And Add below config in application.yml file
+	     config:
+           import: configserver:http://localhost:8088
+
+4. Hystrix - to make resilence app and to add fallback controller, add this in cloud-gateway.
 	a. Add hystrix dependency in pom
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>

@@ -2,5 +2,13 @@ server:
   port: 8088
 
 spring:
+  application:
+    name: CONFIG-SERVER
   profiles:
     active: native
+  cloud:
+    config:
+      server:
+        git:
+          uri: file:\\D:/dev/proj/java/config-server-repo
+          clone-on-start: true
