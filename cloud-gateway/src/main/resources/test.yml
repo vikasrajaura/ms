@@ -1,0 +1,175 @@
+# Resilience4j -
+#  - various modules of resilience4j
+#    - Circuit Breaker
+#    - Retry
+#    - Rate Limiter
+#    - Time Limiter
+#    - Bulkhead
+#    - Cache
+#
+# There are two starters for the Resilience4J implementations, one for reactive applications and one for non-reactive applications.
+#     • org.springframework.cloud:spring-cloud-starter-circuitbreaker-resilience4j - non-reactive applications
+#     • org.springframework.cloud:spring-cloud-starter-circuitbreaker-reactor-resilience4j - reactive applications
+#
+# Auto-Configuration
+#     You can disable the Resilience4J auto-configuration by setting spring.cloud.circuitbreaker.resilience4j.enabled to false.
+
+
+resilience4j:
+  # Circuitbreaker
+  circuitbreaker:
+    instances:
+      backendA:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+      backendB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 3
+        failureRateThreshold: 100
+        waitDurationInOpenState: 10s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        slidingWindowType: TIME_BASED
+        recordFailurePredicate: io.github.robwin.exception.RecordFailurePredicate
+  # Retry
+  retry:
+    retryAspectOrder: 2
+    instances:
+      backendA:
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptionPredicate: com.habeebcycle.demo.resilientservice.http.exception.RecordFailurePredicate
+  # RateLimiter
+  ratelimiter:
+    instances:
+      backendA:
+        register-health-indicator: true
+        limit-for-period: 5
+        limit-refresh-period: 60s
+        timeout-duration: 0s
+        allow-health-indicator-to-fail: true
+        subscribe-for-events: true
+        event-consumer-buffer-size: 50
+  # Timelimiter
+  timelimiter:
+    instances:
+      backendA:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
+      backendB:
+        timeoutDuration: 1s
+        cancelRunningFuture: false
+  # Bulkhead
+  bulkhead:
+    instances:
+      backendA:
+        maxConcurrentCalls: 10
+      backendB:
+        maxWaitDuration: 10ms
+        maxConcurrentCalls: 20
+
+
+registerHealthIndicator: By default the CircuitBreaker or RateLimiter health indicators are disabled, 
+                         but we can enable them via the configuration by setting it true.
+slidingWindowType: COUNT_BASED/TIME_BASED. 
+  Configures the type of the sliding window which is used to record the outcome of calls when the CircuitBreaker is closed
+  Default value is COUNT_BASED.
+slidingWindowSize: Configures the size of the sliding window which is used to record the outcome of calls when the CircuitBreaker is closed.
+  Its value will be in count based if slidingWindowType is COUNT_BASED.
+  Its value will be in seconds based if slidingWindowType is TIME_BASED.
+  Default value is 100.
+permittedNumberOfCallsInHalfOpenState: Configures the number of permitted calls when the CircuitBreaker is half open.
+  Default value is 10.
+minimumNumberOfCalls: Configures the minimum number of calls which are required (per sliding window period) before the CircuitBreaker can calculate the error rate.
+  Default value is 100
+waitDurationInOpenState: Configures the wait duration (in seconds) which specifies how long the  CircuitBreaker should stay open, before it switches to half open.
+  Default value is 60 seconds.
+slowCallRateThreshold: Configures a threshold in percentage. The CircuitBreaker considers a  call as slow when the call duration is greater than  slowCallDurationThreshold
+  Default value is 100.
+slowCallDurationThreshold: Configures the duration threshold (seconds) above which calls are considered as slow and increase the slow calls percentage.
+  Default value is 60.
+failureRateThreshold: Configures the failure rate threshold in percentage. 
+  If the failure rate  is equal or greater than the threshold the CircuitBreaker transitions to open and starts short-circuiting calls.
+  Default value is 50.
+
+##################
+  Configuration: You can configure your CircuitBreaker, Retry, RateLimiter, Bulkhead, Thread pool bulkhead and TimeLimiter instances in Spring Boot’s application.yml config file.
+  For example -
+
+  resilience4j.circuitbreaker:
+    instances:
+      backendA:
+        registerHealthIndicator: true
+        slidingWindowSize: 100
+      backendB:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowType: TIME_BASED
+        minimumNumberOfCalls: 20
+        waitDurationInOpenState: 50s
+        failureRateThreshold: 50
+        eventConsumerBufferSize: 10
+        recordFailurePredicate: io.github.robwin.exception.RecordFailurePredicate
+
+  resilience4j.retry:
+    instances:
+      backendA:
+        maxAttempts: 3
+        waitDuration: 10s
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2
+        retryExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+        ignoreExceptions:
+          - io.github.robwin.exception.BusinessException
+      backendB:
+        maxAttempts: 3
+        waitDuration: 10s
+        retryExceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - java.io.IOException
+        ignoreExceptions:
+          - io.github.robwin.exception.BusinessException
+
+  resilience4j.bulkhead:
+    instances:
+      backendA:
+        maxConcurrentCalls: 10
+      backendB:
+        maxWaitDuration: 10ms
+        maxConcurrentCalls: 20
+
+  resilience4j.thread-pool-bulkhead:
+    instances:
+      backendC:
+        maxThreadPoolSize: 1
+        coreThreadPoolSize: 1
+        queueCapacity: 1
+        writableStackTraceEnabled: true
+
+  resilience4j.ratelimiter:
+    instances:
+      backendA:
+        limitForPeriod: 10
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 100
+      backendB:
+        limitForPeriod: 6
+        limitRefreshPeriod: 500ms
+        timeoutDuration: 3s
+
+  resilience4j.timelimiter:
+    instances:
+      backendA:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
+      backendB:
+        timeoutDuration: 1s
+        cancelRunningFuture: false
